@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SafeSpoke v2 – check a used bike before you buy</title>
+<meta name="description" content="Check a secondhand bike listing step by step, ask the seller for proof, and use a meeting checklist before you pay.">
+<style>
+  :root{
+    --bg:#f6f4ee; --ink:#1c1f1a; --muted:#5d625a; --card:#fff; --line:#dcd8cb;
+    --brand:#1f6f4a; --brand-ink:#fff; --focus:#0b57d0;
+    --good:#1f6f4a; --good-bg:#e2f2e8; --warn:#8a5a00; --warn-bg:#fff1d1; --bad:#a3231b; --bad-bg:#fde4e1;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:84px}
+  :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+  [tabindex="-1"]:focus{outline:none}
+  .wrap{max-width:640px;margin:0 auto;padding:0 16px}
+  header{background:var(--ink);color:#fff}
+  header .wrap{display:flex;align-items:center;justify-content:space-between;padding:14px 16px}
+  .logo{font-weight:800;font-size:20px}.logo span{color:#8fe0b2}
+  .ver{font-size:12px;opacity:.7}
+  h1{font-size:clamp(24px,6vw,32px);line-height:1.15;margin:22px 0 6px}
+  h2{font-size:20px;margin:0 0 6px}
+  p.lead{color:var(--muted);margin:0 0 16px}
+  .view[hidden]{display:none}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin:12px 0}
+  .btn{display:block;width:100%;font:inherit;font-weight:700;padding:12px 16px;min-height:48px;border-radius:12px;border:2px solid var(--brand);background:var(--brand);color:var(--brand-ink);cursor:pointer;text-align:center;text-decoration:none}
+  .btn.sec{background:#fff;color:var(--brand)}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px dashed var(--muted);font-weight:600}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn-row{display:flex;gap:10px;margin-top:14px}.btn-row .btn{flex:1}
+  .small{font-size:14px;color:var(--muted)}
+  /* tab bar */
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);z-index:5}
+  nav.tabs .wrap{display:flex;justify-content:space-around;padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+  nav.tabs a{flex:1;text-align:center;padding:8px 4px;min-height:52px;color:var(--muted);text-decoration:none;font-size:13px;font-weight:600;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:2px}
+  nav.tabs a span{font-size:20px;line-height:1}
+  nav.tabs a[aria-current="page"]{color:var(--brand);background:var(--good-bg)}
+  /* progress */
+  .progress{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin:18px 0 6px}
+  .bar{height:10px;background:#e9e6da;border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--brand);transition:width .25s}
+  @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+  /* options */
+  fieldset{border:none;padding:0;margin:0}
+  legend{font-size:20px;font-weight:800;line-height:1.25;padding:0;margin:0 0 6px}
+  .hint{color:var(--muted);font-size:14px;margin:0 0 12px}
+  .opt{display:flex;gap:12px;align-items:flex-start;border:2px solid var(--line);background:#fff;border-radius:12px;padding:12px 14px;margin:8px 0;cursor:pointer;min-height:52px}
+  .opt input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--brand)}
+  .opt:has(input:checked){border-color:var(--brand);background:var(--good-bg)}
+  .askline{display:block;margin-top:10px;font-size:15px}
+  /* result */
+  .verdict{border-radius:var(--r);padding:16px;margin:16px 0;border:2px solid}
+  .verdict.good{background:var(--good-bg);border-color:var(--good);color:var(--good)}
+  .verdict.warn{background:var(--warn-bg);border-color:#d99100;color:var(--warn)}
+  .verdict.bad{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+  .verdict strong{font-size:24px;display:block}
+  ul.reasons{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:8px}
+  ul.reasons li{display:grid;grid-template-columns:24px 1fr;gap:8px}
+  .ic{font-weight:800}.ic.good{color:var(--good)}.ic.warn{color:var(--warn)}.ic.bad{color:var(--bad)}
+  /* templates */
+  .lang{display:inline-flex;border:1px solid var(--line);border-radius:99px;overflow:hidden;margin:4px 0 8px}
+  .lang button{font:inherit;font-size:14px;font-weight:700;padding:8px 16px;min-height:40px;border:none;background:#fff;color:var(--muted);cursor:pointer}
+  .lang button[aria-pressed="true"]{background:var(--ink);color:#fff}
+  .tpl h3{margin:0 0 6px;font-size:16px}
+  .tpl pre{white-space:pre-wrap;font-family:inherit;font-size:15px;line-height:1.45;background:#fbfaf6;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 10px}
+  .copied{color:var(--good);font-weight:700;font-size:14px;min-height:20px}
+  /* checklist */
+  .check{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line);cursor:pointer;min-height:52px}
+  .check:first-of-type{border-top:none}
+  .check input{width:24px;height:24px;flex:none;accent-color:var(--brand);margin-top:1px}
+  .check small{display:block;color:var(--muted);font-size:14px}
+  .check input:checked + span strong{text-decoration:line-through;color:var(--muted)}
+  /* form */
+  label.f{display:block;font-weight:700;font-size:14px;margin:12px 0 4px}
+  input[type=text],input[type=number],input[type=date]{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-radius:10px;min-height:48px;background:#fff;color:var(--ink)}
+  .record{border:2px solid var(--ink);border-radius:12px;padding:16px;background:#fff}
+  .record dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:10px 0}
+  .record dt{font-weight:700}.record dd{margin:0}
+  .sign{display:flex;gap:16px;margin-top:28px}.sign div{flex:1;border-top:1px solid var(--ink);padding-top:4px;font-size:13px}
+  .err{color:var(--bad);font-size:14px;margin-top:4px}
+  footer{color:var(--muted);font-size:13px;padding:24px 0}
+  @media print{header,nav.tabs,.noprint,footer{display:none!important}body{background:#fff;padding:0}.view{display:none!important}#view-record{display:block!important}#record-form{display:none!important}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><div class="logo">Safe<span>Spoke</span></div><div class="ver">v2</div></div></header>
+
+<main class="wrap">
+
+<!-- HOME -->
+<section id="view-home" class="view" aria-labelledby="h-home">
+  <h1 id="h-home">Buying a used bike from a stranger?</h1>
+  <p class="lead">See if a bike is worth it for you, check the listing, and buy safely. Nothing you enter leaves your phone.</p>
+  <div class="card">
+    <h2>Is a bike worth it for me?</h2>
+    <p class="small">Compare a used bike with scooter rides or public transport.</p>
+    <a class="btn sec" href="#worth">Compare costs</a>
+  </div>
+  <div class="card">
+    <h2>I found a bike online</h2>
+    <p class="small">Kleinanzeigen, Facebook, a flyer: answer 5 short questions and see what to check next.</p>
+    <a class="btn" href="#check">Start check →</a>
+  </div>
+  <div class="card">
+    <h2>I'm meeting the seller</h2>
+    <p class="small">A checklist for the handover, saved on this phone.</p>
+    <a class="btn sec" href="#meet">Open meeting mode</a>
+  </div>
+  <div class="card">
+    <h2>I just bought it</h2>
+    <p class="small">Write a short purchase record with the frame number. Both of you keep a photo.</p>
+    <a class="btn sec" href="#record">Make a purchase record</a>
+    <a class="btn ghost" href="#protect" style="margin-top:10px">How to protect it from theft</a>
+  </div>
+  <footer>SafeSpoke gives guidance, not a guarantee. If a bike looks stolen, don't buy it. Course project (GUI Design, Cycle 1), built with an AI code agent.</footer>
+</section>
+
+<!-- WORTH -->
+<section id="view-worth" class="view" aria-labelledby="h-worth" hidden>
+  <h1 id="h-worth">Is a bike worth it for me?</h1>
+  <p class="lead">A used bike doesn't have to cost 1,000 €. Enter your own numbers and see when it pays off.</p>
+  <form class="card" id="worth-form" onsubmit="return false">
+    <label class="f" for="w-trips">Trips per week</label>
+    <input id="w-trips" type="number" min="0" step="1" inputmode="numeric" value="6">
+    <label class="f" for="w-cost">What one trip costs you now (€)</label>
+    <input id="w-cost" type="number" min="0" step="0.5" inputmode="decimal" value="4">
+    <p class="hint" style="margin-top:4px">E.g. a rental e-scooter ride, or a single public transport ticket.</p>
+    <label class="f" for="w-bike">Price of the used bike (€)</label>
+    <input id="w-bike" type="number" min="0" step="10" inputmode="numeric" value="250">
+    <label class="f" for="w-lock">Lock and repairs per year (€)</label>
+    <input id="w-lock" type="number" min="0" step="10" inputmode="numeric" value="60">
+  </form>
+  <div class="verdict good" id="worth-out" role="status" aria-live="polite"></div>
+  <a class="btn" href="#check">I found a bike – check the listing</a>
+  <p class="small">Only money is counted. Time, weather and comfort are up to you.</p>
+</section>
+
+<!-- PROTECT -->
+<section id="view-protect" class="view" aria-labelledby="h-protect" hidden>
+  <h1 id="h-protect">Protect your bike</h1>
+  <p class="lead">Thieves can take a bike in about a minute. These steps make it harder and help you get it back.</p>
+  <div class="card" id="protect-list"></div>
+  <a class="btn sec" href="#home">← Home</a>
+</section>
+
+<!-- CHECK -->
+<section id="view-check" class="view" aria-labelledby="h-check" hidden>
+  <div id="step-area">
+    <div class="progress"><span id="step-label">Step 1 of 5</span><button type="button" class="btn ghost noprint" id="restart" style="width:auto;min-height:36px;padding:4px 12px;font-size:14px">Start over</button></div>
+    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="5" aria-valuenow="1" aria-labelledby="step-label"><i id="bar-fill" style="width:20%"></i></div>
+    <h1 id="h-check" class="sr" style="position:absolute;left:-9999px">Check a listing</h1>
+    <form id="step-form" class="card" style="margin-top:16px" onsubmit="return false"></form>
+    <div class="btn-row">
+      <button type="button" class="btn sec" id="back">← Back</button>
+      <button type="button" class="btn" id="next" disabled>Next</button>
+    </div>
+  </div>
+  <div id="result-area" hidden></div>
+</section>
+
+<!-- ASK -->
+<section id="view-ask" class="view" aria-labelledby="h-ask" hidden>
+  <h1 id="h-ask">Ask the seller</h1>
+  <p class="lead">Asking for proof can feel rude. These messages are friendly and normal for any honest seller. Copy and paste them into the chat.</p>
+  <div class="lang" role="group" aria-label="Message language">
+    <button type="button" data-lang="de" aria-pressed="true">Deutsch</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+  <div id="tpls"></div>
+  <a class="btn sec" href="#check">← Back to my check</a>
+</section>
+
+<!-- MEET -->
+<section id="view-meet" class="view" aria-labelledby="h-meet" hidden>
+  <h1 id="h-meet">Meeting mode</h1>
+  <p class="lead">Tick things off while you stand next to the bike. Your progress stays on this phone.</p>
+  <div class="progress"><span id="meet-count" aria-live="polite">0 of 8 done</span></div>
+  <div class="bar"><i id="meet-fill" style="width:0%"></i></div>
+  <div class="card" id="meet-list"></div>
+  <div class="btn-row">
+    <a class="btn" href="#record">Next: purchase record</a>
+    <button type="button" class="btn ghost" id="meet-reset">Reset checklist</button>
+  </div>
+</section>
+
+<!-- RECORD -->
+<section id="view-record" class="view" aria-labelledby="h-record" hidden>
+  <h1 id="h-record">Purchase record</h1>
+  <p class="lead noprint">A simple written record, as Kleinanzeigen and the ADFC recommend. Show it, sign it, and both take a photo. Nothing is uploaded.</p>
+  <form id="record-form" class="card" novalidate>
+    <label class="f" for="r-seller">Seller's name</label><input id="r-seller" type="text" autocomplete="off">
+    <label class="f" for="r-buyer">Buyer's name</label><input id="r-buyer" type="text" autocomplete="off">
+    <label class="f" for="r-bike">Bike (brand, model, colour)</label><input id="r-bike" type="text" autocomplete="off">
+    <label class="f" for="r-frame">Frame number</label><input id="r-frame" type="text" autocomplete="off">
+    <label class="f" for="r-price">Price (€)</label><input id="r-price" type="number" min="1" step="1" inputmode="numeric">
+    <div class="err" id="price-err" aria-live="polite"></div>
+    <label class="f" for="r-date">Date</label><input id="r-date" type="date">
+    <label class="opt" style="margin-top:14px"><input id="r-own" type="checkbox"> <span>The seller confirms the bike belongs to them and is not stolen.</span></label>
+    <button class="btn" type="submit" style="margin-top:8px">Show record</button>
+  </form>
+  <div id="record-out" hidden></div>
+</section>
+
+</main>
+
+<nav class="tabs" aria-label="Main">
+  <div class="wrap">
+    <a href="#home" data-tab="home"><span aria-hidden="true">⌂</span>Home</a>
+    <a href="#check" data-tab="check"><span aria-hidden="true">✓</span>Check</a>
+    <a href="#meet" data-tab="meet"><span aria-hidden="true">🤝</span>Meet</a>
+    <a href="#record" data-tab="record"><span aria-hidden="true">📝</span>Record</a>
+  </div>
+</nav>
+
+<script>
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+
+/* ---------------- Routing ---------------- */
+const VIEWS = ["home","worth","protect","check","ask","meet","record"];
+function route(){
+  let v = location.hash.replace("#","") || "home";
+  if(!VIEWS.includes(v)) v = "home";
+  VIEWS.forEach(n => $("view-"+n).hidden = n !== v);
+  document.querySelectorAll("nav.tabs a").forEach(a => {
+    const cur = a.dataset.tab === v || (v === "ask" && a.dataset.tab === "check") || ((v === "worth" || v === "protect") && a.dataset.tab === "home");
+    cur ? a.setAttribute("aria-current","page") : a.removeAttribute("aria-current");
+  });
+  window.scrollTo(0,0);
+  const h = $("view-"+v).querySelector("h1, legend"); if(h){ h.setAttribute("tabindex","-1"); h.focus({preventScroll:true}); }
+}
+addEventListener("hashchange", route);
+
+/* ---------------- Check (5 steps) ---------------- */
+const STEPS = [
+  { id:"price", type:"radio", q:"How does the price compare with similar bikes?",
+    hint:"Look at 2–3 similar listings in your city first.",
+    opts:[["ok","About the same"],["low","Much cheaper (more than 40% less)"],["unk","Not sure yet"]] },
+  { id:"frame", type:"radio", q:"Did the seller show you the frame number?",
+    hint:"The frame number (Rahmennummer) is usually stamped under the bike, between the pedals.",
+    opts:[["shown","Yes, and it matches the photos"],["refuse","They avoid or refuse"],["unk","I haven't asked yet"]], ask:"frame" },
+  { id:"proof", type:"radio", q:"Did the seller show an invoice or warranty?",
+    hint:"Check two things on it: the seller's name, and the frame number. That shows the bike is really theirs.",
+    opts:[["yes","Yes – name and frame number match"],["partial","Yes, but the name or frame number don't match / are missing"],["story","No – only a story (“from a friend”, “found it”)"],["unk","I haven't asked yet"]], ask:"proof" },
+  { id:"pay", type:"radio", q:"How do they want to be paid?",
+    hint:"Paying in person when you have the bike is the safest.",
+    opts:[["inperson","Cash or transfer in person, when I get the bike"],["advance","Before I see the bike (deposit, PayPal Friends & Family)"],["link","Through a link or “safe payment” page they sent"],["unk","Not discussed yet"]], ask:"pay" },
+  { id:"flags", type:"check", q:"Did you notice any of these?",
+    hint:"Tick all that apply. If none, just press “See result”.",
+    opts:[["rush","They push you: “other buyers are coming today”"],["place","They only want to meet somewhere odd (car park, at night)"],["lock","Cut lock, or the frame number looks scratched"],["photos","Only stock or blurry photos"],["new","Brand-new account with no history"]] }
+];
+let answers = store.get("ss_answers", {});
+let step = Math.min(store.get("ss_step", 0), STEPS.length - 1);
+
+function renderStep(){
+  const s = STEPS[step];
+  $("step-label").textContent = `Step ${step+1} of ${STEPS.length}`;
+  $("bar-fill").style.width = ((step+1)/STEPS.length*100) + "%";
+  document.querySelector('[role=progressbar]').setAttribute("aria-valuenow", step+1);
+  const cur = answers[s.id];
+  const name = "q_"+s.id;
+  const opts = s.opts.map(([v,l]) => {
+    const checked = s.type === "radio" ? cur === v : (cur || []).includes(v);
+    return `<label class="opt"><input type="${s.type === "radio" ? "radio" : "checkbox"}" name="${name}" value="${v}" ${checked ? "checked" : ""}><span>${l}</span></label>`;
+  }).join("");
+  const ask = s.ask ? `<a class="askline" href="#ask" data-tpl="${s.ask}">💬 Haven't asked yet? Copy a message to ask →</a>` : "";
+  $("step-form").innerHTML = `<fieldset><legend>${s.q}</legend><p class="hint">${s.hint}</p>${opts}</fieldset>${ask}`;
+  $("back").disabled = step === 0;
+  $("next").textContent = step === STEPS.length - 1 ? "See result" : "Next";
+  updateNext();
+}
+function updateNext(){
+  const s = STEPS[step];
+  $("next").disabled = s.type === "radio" && !answers[s.id];
+}
+$("step-form").addEventListener("change", () => {
+  const s = STEPS[step];
+  const inputs = [...$("step-form").querySelectorAll("input")];
+  answers[s.id] = s.type === "radio" ? (inputs.find(i => i.checked) || {}).value : inputs.filter(i => i.checked).map(i => i.value);
+  store.set("ss_answers", answers);
+  updateNext();
+});
+$("next").onclick = () => {
+  if(step < STEPS.length - 1){ step++; store.set("ss_step", step); renderStep(); $("step-form").querySelector("legend").focus?.(); }
+  else showResult();
+};
+$("back").onclick = () => { if(step > 0){ step--; store.set("ss_step", step); renderStep(); } };
+function restart(){
+  answers = {}; step = 0; store.set("ss_answers", answers); store.set("ss_step", 0);
+  $("result-area").hidden = true; $("step-area").hidden = false; renderStep();
+}
+$("restart").onclick = restart;
+
+function assess(a){
+  const r = [];
+  const add = (lv, t, action) => r.push({lv, t, action});
+  ({ok:()=>add("good","The price is normal for this kind of bike"),
+    low:()=>add("bad","The price is much lower than similar bikes – common with stolen bikes and scams"),
+    unk:()=>add("warn","You haven't compared the price yet","Compare 2–3 similar listings")}[a.price])();
+  ({shown:()=>add("good","The frame number is shown and matches"),
+    refuse:()=>add("bad","The seller avoids showing the frame number – a major red flag"),
+    unk:()=>add("warn","Frame number not checked yet","Ask the seller for a photo of it")}[a.frame])();
+  ({yes:()=>add("good","Invoice matches the seller and the frame number"),
+    partial:()=>add("warn","The invoice doesn't match the seller or the bike","Ask why – an invoice alone isn't proof"),
+    story:()=>add("warn","Only a story, no proof of ownership","Ask for a receipt or invoice"),
+    unk:()=>add("warn","You haven't asked for proof of ownership yet","Ask for a receipt or invoice")}[a.proof])();
+  ({inperson:()=>add("good","You pay in person when you get the bike"),
+    advance:()=>add("bad","They want money before you see the bike – you can't get it back"),
+    link:()=>add("bad","Payment links or “safe payment” pages sent in the chat are a known scam"),
+    unk:()=>add("warn","Payment not agreed yet","Say you'll pay in person")}[a.pay])();
+  const F = {rush:["warn","Pressure to decide quickly"],place:["warn","Wants to meet in an odd place"],
+             lock:["bad","Cut lock or scratched frame number – likely stolen"],photos:["warn","Only stock or blurry photos"],
+             new:["warn","New account with no history"]};
+  (a.flags || []).forEach(k => add(F[k][0], F[k][1]));
+  const bad = r.filter(x => x.lv === "bad").length, warn = r.filter(x => x.lv === "warn").length;
+  const level = bad ? "bad" : warn ? "warn" : "good";
+  return {level, reasons: r};
+}
+const LABEL = {good:"Looks OK so far", warn:"Needs checks", bad:"High risk – don't pay"};
+const ICON = {good:"✓", warn:"!", bad:"✕"};
+const NEXT = {
+  good:"Still check everything in person. Open meeting mode when you meet the seller.",
+  warn:"Don't travel or pay yet. Ask the seller for what's missing. An honest seller won't mind.",
+  bad:"We recommend not buying this bike. Never pay in advance. If it looks stolen, you can report the listing to the platform or the police."
+};
+function showResult(){
+  const {level, reasons} = assess(answers);
+  const sorted = [...reasons].sort((x,y) => ["bad","warn","good"].indexOf(x.lv) - ["bad","warn","good"].indexOf(y.lv));
+  $("step-area").hidden = true;
+  const ra = $("result-area"); ra.hidden = false;
+  ra.innerHTML = `
+    <div class="progress"><span>Done – 5 of 5</span></div>
+    <div class="bar"><i style="width:100%"></i></div>
+    <div class="verdict ${level}" role="status"><strong><span aria-hidden="true">${ICON[level]}</span> ${LABEL[level]}</strong>${NEXT[level]}</div>
+    <div class="card"><h2>Why</h2><ul class="reasons">${sorted.map(x => `<li><span class="ic ${x.lv}" aria-hidden="true">${ICON[x.lv]}</span><span>${x.t}${x.action ? ` – <em>${x.action}</em>` : ""}</span></li>`).join("")}</ul></div>
+    ${level !== "good" ? `<a class="btn" href="#ask">💬 Ask the seller (copy a message)</a>` : ""}
+    <a class="btn ${level !== "good" ? "sec" : ""}" href="#meet" style="margin-top:10px">Open meeting mode</a>
+    <div class="btn-row"><button type="button" class="btn sec" id="edit">← Change answers</button><button type="button" class="btn ghost" id="again">Check another bike</button></div>
+    <p class="small">Guidance, not a guarantee. SafeSpoke can't confirm that a bike is not stolen.</p>`;
+  $("edit").onclick = () => { ra.hidden = true; $("step-area").hidden = false; step = 0; renderStep(); };
+  $("again").onclick = restart;
+  ra.querySelector(".verdict").focus?.();
+}
+
+/* ---------------- Ask the seller ---------------- */
+const TPL = {
+  de:[
+    ["frame","Rahmennummer + Rechnung","Hallo! Das Fahrrad gefällt mir sehr. Könnten Sie mir bitte ein Foto der Rahmennummer (unter dem Tretlager) und der Rechnung bzw. Garantie schicken? Dann komme ich gern vorbei. Danke!"],
+    ["proof","Eigentumsnachweis","Hallo! Haben Sie noch eine Rechnung oder einen Kaufbeleg für das Fahrrad? Ich möchte einfach sichergehen, bevor ich es kaufe. Danke für Ihr Verständnis!"],
+    ["pay","Bezahlung vor Ort","Hallo! Ich bezahle gern bar oder per Überweisung direkt bei der Übergabe, wenn ich das Fahrrad gesehen und Probe gefahren bin. Vorab zahle ich leider nicht. Passt das für Sie?"],
+    ["meet","Treffpunkt","Hallo! Können wir uns an einem öffentlichen Ort treffen, zum Beispiel vor einem Café oder am Bahnhof? Tagsüber wäre super."]
+  ],
+  en:[
+    ["frame","Frame number + invoice","Hi! I really like the bike. Could you please send me a photo of the frame number (under the pedals) and of the invoice or warranty? Then I'm happy to come by. Thanks!"],
+    ["proof","Proof of ownership","Hi! Do you still have an invoice or receipt for the bike? I'd just like to be sure before I buy it. Thanks for understanding!"],
+    ["pay","Pay in person","Hi! I'm happy to pay cash or by transfer when we meet, after I've seen the bike and done a test ride. I don't pay in advance. Is that OK for you?"],
+    ["meet","Meeting place","Hi! Could we meet in a public place, for example outside a café or at the station? During the day would be great."]
+  ]
+};
+let lang = store.get("ss_lang","de");
+function renderTpl(focus){
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === lang));
+  $("tpls").innerHTML = TPL[lang].map(([id,title,text]) => `
+    <div class="card tpl" id="tpl-${id}">
+      <h3>${title}</h3><pre>${text}</pre>
+      <button type="button" class="btn sec" data-copy="${id}">Copy message</button>
+      <div class="copied" aria-live="polite"></div>
+    </div>`).join("");
+  if(focus){ const el = $("tpl-"+focus); if(el){ el.style.borderColor = "var(--brand)"; } }
+}
+document.querySelector(".lang").addEventListener("click", e => {
+  const b = e.target.closest("button[data-lang]"); if(!b) return;
+  lang = b.dataset.lang; store.set("ss_lang", lang); renderTpl();
+});
+$("tpls").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-copy]"); if(!b) return;
+  const text = b.parentElement.querySelector("pre").textContent;
+  const out = b.parentElement.querySelector(".copied");
+  try{ await navigator.clipboard.writeText(text); out.textContent = "✓ Copied – paste it into the chat"; }
+  catch(err){
+    const r = document.createRange(); r.selectNodeContents(b.parentElement.querySelector("pre"));
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    out.textContent = "Text selected – press copy on your keyboard";
+  }
+});
+document.addEventListener("click", e => {
+  const a = e.target.closest("a[data-tpl]"); if(a){ setTimeout(() => renderTpl(a.dataset.tpl), 0); }
+});
+
+/* ---------------- Meeting mode ---------------- */
+const MEET = [
+  ["Meet in a public place","A café, campus entrance or station. Tell a friend where you are."],
+  ["Frame number matches","Compare it with the photo and the receipt."],
+  ["Seller shows proof","Receipt or invoice. Does the name match?"],
+  ["No signs of theft","No cut lock, no scratched or re-stamped frame number."],
+  ["Test ride","Brakes, gears, chain noise, wobbly wheels. Take your time."],
+  ["Check key parts","Tyres, lights, chain wear – use them to discuss the price."],
+  ["Pay only now","Cash or a transfer you make yourself, after you have the bike."],
+  ["Write a purchase record","Date, price, frame number, both names – both keep a photo."]
+];
+let meet = store.get("ss_meet", []);
+function renderMeet(){
+  $("meet-list").innerHTML = MEET.map(([t,d],i) =>
+    `<label class="check"><input type="checkbox" data-i="${i}" ${meet.includes(i) ? "checked" : ""}><span><strong>${t}</strong><small>${d}</small></span></label>`).join("");
+  updateMeet();
+}
+function updateMeet(){
+  $("meet-count").textContent = `${meet.length} of ${MEET.length} done`;
+  $("meet-fill").style.width = (meet.length / MEET.length * 100) + "%";
+}
+$("meet-list").addEventListener("change", e => {
+  const i = +e.target.dataset.i;
+  meet = e.target.checked ? [...new Set([...meet, i])] : meet.filter(x => x !== i);
+  store.set("ss_meet", meet); updateMeet();
+});
+$("meet-reset").onclick = () => { meet = []; store.set("ss_meet", meet); renderMeet(); };
+
+/* ---------------- Purchase record ---------------- */
+$("r-date").valueAsDate = new Date();
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+$("record-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const price = parseFloat($("r-price").value);
+  if($("r-price").value && (!(price > 0))){ $("price-err").textContent = "Please enter a price above 0."; $("r-price").focus(); return; }
+  $("price-err").textContent = "";
+  const v = id => esc($(id).value.trim()) || "—";
+  const out = $("record-out"); out.hidden = false;
+  out.innerHTML = `
+    <div class="record">
+      <h2>Bike purchase record / Kaufvertrag</h2>
+      <dl>
+        <dt>Seller</dt><dd>${v("r-seller")}</dd>
+        <dt>Buyer</dt><dd>${v("r-buyer")}</dd>
+        <dt>Bike</dt><dd>${v("r-bike")}</dd>
+        <dt>Frame no.</dt><dd>${v("r-frame")}</dd>
+        <dt>Price</dt><dd>${$("r-price").value ? "€" + esc($("r-price").value) : "—"}</dd>
+        <dt>Date</dt><dd>${v("r-date")}</dd>
+      </dl>
+      <p>${$("r-own").checked ? "The seller confirms that the bike belongs to them and is not stolen." : "<em>Ownership confirmation not ticked.</em>"}</p>
+      <div class="sign"><div>Seller signature</div><div>Buyer signature</div></div>
+    </div>
+    <div class="btn-row noprint"><button type="button" class="btn" onclick="print()">Print / save as PDF</button><button type="button" class="btn sec" id="rec-edit">Edit</button></div>
+    <p class="small noprint">Tip: you can also just take a photo of this screen together with the seller.</p><a class="btn sec noprint" href="#protect">Next: protect your bike from theft</a>`;
+  $("record-form").hidden = true;
+  $("rec-edit").onclick = () => { out.hidden = true; $("record-form").hidden = false; };
+  out.scrollIntoView();
+});
+
+/* ---------------- Worth it? ---------------- */
+function calcWorth(){
+  const n = id => Math.max(0, parseFloat($(id).value) || 0);
+  const trips = n("w-trips"), cost = n("w-cost"), bike = n("w-bike"), extra = n("w-lock");
+  const perWeek = trips * cost;
+  const out = $("worth-out");
+  if(!perWeek){ out.className = "verdict warn"; out.innerHTML = "<strong>Enter your trips and their cost</strong>Then you'll see when a bike pays off."; return; }
+  const yearCost = perWeek * 52, yearBike = extra;
+  const weeks = Math.ceil(bike / Math.max(perWeek - extra/52, 0.01));
+  const fmt = x => Math.round(x).toLocaleString("en-GB");
+  if(perWeek - extra/52 <= 0){
+    out.className = "verdict warn";
+    out.innerHTML = `<strong>Probably not worth it</strong>You spend about ${fmt(perWeek)} € a week now – less than a bike's yearly costs.`;
+  } else {
+    out.className = weeks <= 52 ? "verdict good" : "verdict warn";
+    out.innerHTML = `<strong>Pays off after about ${weeks} week${weeks === 1 ? "" : "s"}</strong>Now you spend about ${fmt(perWeek)} € a week (${fmt(yearCost)} € a year). The bike costs ${fmt(bike)} € plus about ${fmt(yearBike)} € a year.`;
+  }
+}
+$("worth-form").addEventListener("input", calcWorth);
+
+/* ---------------- Protect ---------------- */
+const PROTECT = [
+  ["Don't leave it outside overnight","Keep it in a courtyard, cellar or bike room if you can."],
+  ["Use a good lock","A D-lock or folding lock, locked through the frame to something fixed."],
+  ["Hide a tracker","A small tracker (e.g. an AirTag) can show where the bike was taken."],
+  ["Write down the frame number","Keep a photo of it and of the purchase record – the police need it."],
+  ["Get it coded","The ADFC and bike shops engrave an owner code for about 15–20 €."]
+];
+$("protect-list").innerHTML = PROTECT.map(([t,d]) => `<div class="check" style="cursor:default"><span aria-hidden="true">✓</span><span><strong>${t}</strong><small>${d}</small></span></div>`).join("");
+
+/* ---------------- Init ---------------- */
+renderStep(); renderTpl(); renderMeet(); calcWorth(); route();
+</script>
+</body>
+</html>

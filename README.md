@@ -5,8 +5,8 @@ Course project for GUI Design & Web Optimization (Cycle 1, Personal Product).
 **Brief:** *Secondhand bike marketplace.* A student wants to buy a reliable used bike without getting scammed or ending up with a stolen one, while there's no easy way to check a listing is trustworthy.
 
 ## Versions
-- **v2 (current):** [`/v2/`](v2/), redesigned after the heuristic self-evaluation, desk research and two user interviews.
-- **v1 (Week 1):** [`/`](index.html), the first one-shot AI build.
+- **v2 (current):** [`v2.html`](v2.html), redesigned after the heuristic self-evaluation, desk research and two user interviews.
+- **v1 (Week 1):** [`index.html`](index.html), the first one-shot AI build.
 
 ## What v2 does
 0. **Is a bike worth it?** Compares a used bike with what you pay per trip now (e.g. scooter rides).
