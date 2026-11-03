@@ -5,7 +5,8 @@ Course project for GUI Design & Web Optimization (Cycle 1, Personal Product).
 **Brief:** *Secondhand bike marketplace.* A student wants to buy a reliable used bike without getting scammed or ending up with a stolen one, while there's no easy way to check a listing is trustworthy.
 
 ## Versions
-- **v2 (current):** [`v2.html`](v2.html), redesigned after the heuristic self-evaluation, desk research and two user interviews.
+- **v3 (final, Cycle 1):** [`v3.html`](v3.html), changed after prototype testing of v2 (see `Prototype_Testing_Notes_Kuzey_Bayraktar.pdf`).
+- **v2:** [`v2.html`](v2.html), redesigned after the heuristic self-evaluation, desk research and two user interviews.
 - **v1 (Week 1):** [`index.html`](index.html), the first one-shot AI build.
 
 ## What v2 does
@@ -27,6 +28,13 @@ Course project for GUI Design & Web Optimization (Cycle 1, Personal Product).
 | Cost vs. need was the real barrier; a bike was seen as 1000+ € next to 3–5 € scooter rides | Interviews 1 + 2 | "Is a bike worth it?" calculator |
 | People ask for an invoice and warranty but never the frame number | Interviews 1 + 2 | Proof step checks the name and frame number on the invoice |
 | Theft worry comes after buying (AirTag, "wouldn't leave it outside") | Interview 1 | "Protect your bike" screen |
+
+## What changed in v3 (prototype testing)
+| Test finding | v3 change |
+|---|---|
+| Tester hesitated at "Meeting mode" | Renamed to "Checklist for seeing the bike" with a "use this when you meet the seller" label |
+| Check gave a green result in a high-risk scenario | "Is this what you saw?" review screen with a Change button for each answer before the result |
+| Tester didn't like the interface | Simpler home screen with five large tiles |
 
 Static HTML/CSS/JS with no dependencies and no tracking. Data stays in the browser.
 
